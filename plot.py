@@ -19,10 +19,7 @@ def tkinter():
         root.destroy()
         tkinter()
 
-
-
     resetButton = tk.Button(root, text='Reset', command=reset).place(x=125, y=200)
-    #resetButton.pack()
 
     def series(seriesUUID, decadeVar, boxSeries):
 
@@ -55,9 +52,6 @@ def tkinter():
 
             boxRace = ttk.OptionMenu(root, raceVar, "Select a race", *dictRace.keys(), command=load)
             boxRace.pack(pady=10)
-
-
-
 
         boxSeries.configure(state='disabled')
         yearVar = tk.StringVar(root)
@@ -124,4 +118,3 @@ def plot(url):
 
 if __name__ == '__main__':
     tkinter()
-    #get_slug()
