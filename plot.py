@@ -28,14 +28,15 @@ def tkinter():
 
             def load(raceVar):
                 boxRace.configure(state='disabled')
-                try:
-                    plot(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_race&sessionFact=LapChart&size=999')
-                    root.destroy()
-                    tkinter()
-                except:
-                    messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
-                    root.destroy()
-                    tkinter()
+                print(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_race&sessionFact=LapChart&size=999')
+                # try:
+                plot(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_race&sessionFact=LapChart&size=999', raceVar, yearVar)
+                root.destroy()
+                tkinter()
+                # except:
+                #     messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
+                #     root.destroy()
+                #     tkinter()
 
 
             r = requests.get(f'https://motorsportstats.com/api/advanced-search?entity=events&size=999&filterIds={seriesUUID}&filterIds={yearVar}')
@@ -86,7 +87,7 @@ def tkinter():
 
     root.mainloop()
 
-def plot(url):
+def plot(url, name, year):
 
     def create_arr(num):
         pos = []
@@ -109,11 +110,15 @@ def plot(url):
     fig, ax = plt.subplots()
     for i, j in enumerate(positions):
         ax.plot(positions[i], label = f'#{cars[i][0]} - {cars[i][1]}')
-    ax.set_xticks([])
+    print(data['content'][-1]['lap'])
+    ax.set_xticks([0, data['content'][-1]['lap']])
     ax.set_yticks(range(1, len(cars) +1))
     ax.invert_yaxis()
     ax.set_xlim(left = 0)
     plt.legend(bbox_to_anchor = (1, 1))
+    fig.suptitle(f'{year} {name}')
+    ax.set_xlabel('Laps')
+    ax.set_ylabel('Positions')
     plt.show()
 
 if __name__ == '__main__':
