@@ -1,6 +1,5 @@
 ## TO-DO
 ## Find an effective way to show cars with multiple drivers
-## Handle sessions other than race and weekends with many races
 ## Tidy up horrible GUI (both aesthetically and in code)
 ## Animate the graph
 
@@ -9,7 +8,7 @@ import requests
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-def tkinter():
+def gui(): #bodged up gui code
     root = tk.Tk()
     root.title('Lap Chart Plotter')
 
@@ -17,7 +16,7 @@ def tkinter():
 
     def reset():
         root.destroy()
-        tkinter()
+        gui()
 
     resetButton = tk.Button(root, text='Reset', command=reset).place(x=125, y=200)
 
@@ -26,17 +25,39 @@ def tkinter():
         def race(yearVar):
             boxYear.configure(state='disabled')
 
-            def load(raceVar):
+            def session(raceVar):
                 boxRace.configure(state='disabled')
-                print(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_race&sessionFact=LapChart&size=999')
-                # try:
-                plot(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_race&sessionFact=LapChart&size=999', raceVar, yearVar)
-                root.destroy()
-                tkinter()
-                # except:
-                #     messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
-                #     root.destroy()
-                #     tkinter()
+
+                sessionNames = ['race', 'race-1', 'race-2', 'race-3', 'race-4', 'race-5'] # the only way to find available sessions seems to be trial and error using possible session names. only races are available as quali/practice tends to have strange data that doesn't work on the graph
+                validSessions = []
+
+                def load(sessionVar):
+                    try:
+                        plot(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_{sessionVar}&sessionFact=LapChart&size=999', raceVar, yearVar, sessionVar)
+                        root.destroy()
+                        gui()
+                    except:
+                        messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
+                        reset()
+
+                for i in sessionNames:
+                    try:
+                        r = requests.get(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_{i}&sessionFact=LapChart&size=999')
+                        data = r.json()
+                        validSessions.append(i)
+                    except:
+                         pass
+
+                if validSessions == []:
+                    messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
+                    reset()
+
+                
+                sessionVar = tk.StringVar()
+                sessionVar.set("")
+
+                boxSession = ttk.OptionMenu(root, sessionVar, "Select a session", *validSessions, command=load)
+                boxSession.pack(pady=10)
 
 
             r = requests.get(f'https://motorsportstats.com/api/advanced-search?entity=events&size=999&filterIds={seriesUUID}&filterIds={yearVar}')
@@ -44,14 +65,14 @@ def tkinter():
             if data['totalElements'] == 0:
                 messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
                 root.destroy()
-                tkinter()
+                gui()
 
             dictRace = dict((i['name'], i['uuid']) for i in data['content'])
 
             raceVar = tk.StringVar()
             raceVar.set("")
 
-            boxRace = ttk.OptionMenu(root, raceVar, "Select a race", *dictRace.keys(), command=load)
+            boxRace = ttk.OptionMenu(root, raceVar, "Select a race", *dictRace.keys(), command=session)
             boxRace.pack(pady=10)
 
         boxSeries.configure(state='disabled')
@@ -87,9 +108,9 @@ def tkinter():
 
     root.mainloop()
 
-def plot(url, name, year):
+def plot(url, name, year, session):
 
-    def create_arr(num):
+    def create_arr(num): #creates an array for a car from the array of laps
         pos = []
         for k, l in enumerate(data['content']):
             for i, j in enumerate(data['content'][k]['cars']):
@@ -110,16 +131,16 @@ def plot(url, name, year):
     fig, ax = plt.subplots()
     for i, j in enumerate(positions):
         ax.plot(positions[i], label = f'#{cars[i][0]} - {cars[i][1]}')
-    print(data['content'][-1]['lap'])
+        ax.annotate(f'#{cars[i][0]}', xy=(len(positions[i])-0.8,positions[i][-1]+0.1))
     ax.set_xticks([0, data['content'][-1]['lap']])
     ax.set_yticks(range(1, len(cars) +1))
     ax.invert_yaxis()
     ax.set_xlim(left = 0)
     plt.legend(bbox_to_anchor = (1, 1))
-    fig.suptitle(f'{year} {name}')
+    fig.suptitle(f'{year} {name} {session.replace("-", " ").title()}')
     ax.set_xlabel('Laps')
     ax.set_ylabel('Positions')
     plt.show()
 
 if __name__ == '__main__':
-    tkinter()
+    gui()
