@@ -12,13 +12,13 @@ def gui(): #bodged up gui code
     root = tk.Tk()
     root.title('Lap Chart Plotter')
 
-    root.geometry('300x240')
+    root.geometry('300x300')
 
     def reset():
         root.destroy()
         gui()
 
-    resetButton = tk.Button(root, text='Reset', command=reset).place(x=125, y=200)
+    resetButton = tk.Button(root, text='Reset', command=reset).place(x=125, y=240)
 
     def series(seriesUUID, decadeVar, boxSeries):
 
@@ -32,6 +32,8 @@ def gui(): #bodged up gui code
                 validSessions = []
 
                 def load(sessionVar):
+                    boxSession.configure(state='disabled')
+
                     try:
                         plot(f'https://motorsportstats.com/api/result-statistics?sessionSlug={dictRace[raceVar]}_{sessionVar}&sessionFact=LapChart&size=999', raceVar, yearVar, sessionVar)
                         root.destroy()
