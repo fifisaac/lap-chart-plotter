@@ -2,4 +2,5 @@
 
 Fetches lap chart data from motorsportstats.com and creates a graphical representation of the race result using matplotlib
 
-![image](https://github.com/fifisaac/lap-chart-plotter/assets/99099211/6b39098e-a5e3-44a1-b742-9509521a5a72)
+![image](https://github.com/fifisaac/lap-chart-plotter/assets/99099211/ea4c1282-a9b9-4777-b299-67ec2419fdd3)
+
