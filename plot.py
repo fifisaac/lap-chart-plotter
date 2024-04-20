@@ -9,42 +9,53 @@ import requests
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-class GUI:
+class App(tk.Tk):
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title('Lap Chart Plotter')
+        super().__init__()
+        self.title('Lap Chart Plotter')
 
-        self.root.geometry('300x300')
-        self.root.resizable(False, False)
+        self.geometry('300x340')
+        self.resizable(False, False)
+        self.columnconfigure(0, weight=2)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=2)
 
-        resetButton = tk.Button(self.root, text='Reset', command=self.reset)
+        resetButton = tk.Button(self, text='Reset', command=self.reset)
         resetButton.place(x=175, y=240)
 
-        self.lapChartButton = tk.Button(self.root, text='Load Lap Chart', 
+        self.lapChartButton = tk.Button(self, text='Load Lap Chart', 
                                         command=self.loadLapChart)
         self.lapChartButton.place(x=75, y=240)
         self.lapChartButton.configure(state='disabled')
+
+        # not implemented
+        # self.paceChartButton = tk.Button(self, text='Load Pace Chart', 
+        #                                  command=self.loadPaceChart)
+        # self.paceChartButton.place(x=75, y=270)
+        # self.paceChartButton.configure(state='disabled')
+                                                    
 
         self.chooseDecade()
 
         tk.mainloop()
     
     def reset(self):
-            self.root.destroy()
+            self.destroy()
             GUI()
     
     def chooseDecade(self):
-        self.decadeVar = tk.StringVar(self.root)
+        self.decadeVar = tk.StringVar(self)
         self.decadeVar.set("")
 
         self.boxDecade = ttk.OptionMenu(
-            self.root, self.decadeVar, 
+            self, self.decadeVar, 
             "Select a decade", "2020s", 
             "2010s", "2000s", "1990s", 
             "1980s", "1970s", "1960s", 
             "1950s", command=self.chooseSeries
             )
-        self.boxDecade.pack(pady=10)
+        self.boxDecade.grid(column = 1, row = 0, padx=20, 
+                            pady=10, sticky=tk.EW)
     
     def chooseSeries(self, decade: str):
         self.boxDecade.configure(state='disabled')
@@ -54,25 +65,26 @@ class GUI:
         self.dictSeries = dict((i['name'], i['uuid']) for i in data['content'])
 
 
-        self.seriesVar = tk.StringVar(self.root)
+        self.seriesVar = tk.StringVar(self)
         self.seriesVar.set("")
 
-        self.boxSeries = ttk.OptionMenu(self.root, self.seriesVar, 
+        self.boxSeries = ttk.OptionMenu(self, self.seriesVar, 
                                         "Select a series", 
                                         *self.dictSeries.keys(), 
                                         command=self.chooseYear)
-        self.boxSeries.pack(pady=10)
+        self.boxSeries.grid(column = 1, row = 1, padx=20, pady=10, sticky=tk.EW)
 
     def chooseYear(self, series: str):
         self.boxSeries.configure(state='disabled')
-        self.yearVar = tk.StringVar(self.root)
+        self.yearVar = tk.StringVar(self)
         self.yearVar.set("")
 
         years = [int(str(self.decadeVar.get()[:3]) + str(i)) for i in range(0,10)]
-        self.boxYear = ttk.OptionMenu(self.root, self.yearVar, 
+        self.boxYear = ttk.OptionMenu(self, self.yearVar, 
                                       "Select a year", *years, 
                                       command=self.chooseRace)
-        self.boxYear.pack(pady=10)
+        self.boxYear.grid(column = 1, row = 2, padx=20, 
+                          pady=10, sticky=tk.EW)
     
     def chooseRace(self, year: int):
         self.boxYear.configure(state='disabled')
@@ -82,7 +94,7 @@ class GUI:
         r = requests.get(f'https://motorsportstats.com/api/advanced-search?entity=events&size=999&filterIds={seriesUUID}&filterIds={year}')
         data = r.json()
         if data['totalElements'] == 0:
-            messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
+            messagebox.showerror("1. Error", "An error occured. The lap chart likely doesn't exist for this race")
             self.reset()
 
         self.dictRace = dict((i['name'], i['uuid']) for i in data['content'])
@@ -90,11 +102,12 @@ class GUI:
         self.raceVar = tk.StringVar()
         self.raceVar.set("")
 
-        self.boxRace = ttk.OptionMenu(self.root, self.raceVar,
+        self.boxRace = ttk.OptionMenu(self, self.raceVar,
                                       "Select a race",
                                       *self.dictRace.keys(), 
                                       command=self.chooseSession)
-        self.boxRace.pack(pady=10)
+        self.boxRace.grid(column = 1, row = 3, padx=20, 
+                          pady=10, sticky=tk.EW)
         
     def chooseSession(self, race: str):
         self.boxRace.configure(state='disabled')
@@ -113,32 +126,36 @@ class GUI:
                     pass
 
         if validSessions == []:
-            messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
+            messagebox.showerror("2. Error", "An error occured. The lap chart likely doesn't exist for this race")
             self.reset()
 
         self.sessionVar = tk.StringVar()
         self.sessionVar.set("")
 
-        boxSession = ttk.OptionMenu(self.root, self.sessionVar, 
+        boxSession = ttk.OptionMenu(self, self.sessionVar, 
                                     "Select a session", 
                                     *validSessions, 
-                                    command=self.enableButton)
-        boxSession.pack(pady=10)
+                                    command=self.enableLapChartButton)
+        boxSession.grid(column = 1, row = 4, padx=20, 
+                        pady=10, sticky=tk.EW)
     
-    def enableButton(self, _session):  # session value is ignored, but tk requires it to be passed
+    def enableLapChartButton(self, _session):  # session value is ignored, but tk requires it to be passed
         self.lapChartButton.config(state='normal')
     
     def loadLapChart(self):
         try:
-            plot(f'https://motorsportstats.com/api/result-statistics?sessionSlug={self.dictRace[self.raceVar.get()]}_{self.sessionVar.get()}&sessionFact=LapChart&size=999', 
-                 self.raceVar.get(), self.yearVar.get(), self.sessionVar.get())
+            plotLapChart(f'https://motorsportstats.com/api/result-statistics?sessionSlug={self.dictRace[self.raceVar.get()]}_{self.sessionVar.get()}&sessionFact=LapChart&size=999', 
+                         self.raceVar.get(), self.yearVar.get(), self.sessionVar.get())
         except:
-            messagebox.showerror("Error", "An error occured. The lap chart likely doesn't exist for this race")
+            messagebox.showerror("3. Error", "An error occured. The lap chart likely doesn't exist for this race")
+    
+    def loadPaceChart(self):
+        pass
 
 
-def plot(url, name, year, session):
+def plotLapChart(url, name, year, session):
 
-    def create_arr(num):  # creates an array for a car from the array of laps
+    def createArr(num):  # creates an array for a car from the array of laps
         pos = []
         for k, l in enumerate(data['content']):
             for i, j in enumerate(data['content'][k]['cars']):
@@ -151,7 +168,7 @@ def plot(url, name, year, session):
     data = r.json()
 
     cars = [[i['carNumber'], i['drivers'][0]['name']] for i in data['cars']]  #only one name will show for cars with multiple drivers
-    positions = [create_arr(i[0]) for i in cars]
+    positions = [createArr(i[0]) for i in cars]
 
     fig, ax = plt.subplots()
 
@@ -173,5 +190,14 @@ def plot(url, name, year, session):
     plt.show()
 
 
+def plotGapChart(url, name, year, session):
+    pass  # To be implemented
+
+
+def plotPaceChart(url, name, year, session):
+    pass  # To be implemented
+
+
 if __name__ == '__main__':
-    GUI()
+    app = App()
+    app.mainloop()
