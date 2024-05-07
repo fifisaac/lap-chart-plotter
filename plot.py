@@ -41,7 +41,7 @@ class App(tk.Tk):
     
     def reset(self):
             self.destroy()
-            GUI()
+            App()
     
     def chooseDecade(self):
         self.decadeVar = tk.StringVar(self)
