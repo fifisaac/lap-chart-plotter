@@ -36,8 +36,6 @@ class App(tk.Tk):
                                                     
 
         self.chooseDecade()
-
-        tk.mainloop()
     
     def reset(self):
             self.destroy()
